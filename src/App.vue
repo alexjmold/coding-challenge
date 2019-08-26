@@ -1,17 +1,40 @@
 <template>
   <div id="app">
-    <div class="visuals-container">
+    <div
+      class="visuals-container"
+      :style="{
+        width: `${columns * gridItemSize}px`,
+        height: `${rows * gridItemSize}px`
+      }"
+    >
       <Grid
         :columns="columns"
         :rows="rows"
+        :grid-item-size="gridItemSize"
       />
-      <Ship />
+      <Ship ref="ship"/>
     </div>
     <div class="input-container">
       <textarea v-model="gridInput"></textarea>
+      <br>
       <button
         @click="processInput"
       >Go!</button>
+      <div
+        class="output"
+        :class="{ active: outputActive }"
+      >
+        <div class="close" @click="outputActive = false;">x</div>
+        <div class="inner">
+          <div
+            class="output-row"
+            v-for="(item, index) in output"
+          >
+            <p v-html="output[index]"></p>
+            <button @click="playAnimation(index)">Play animation</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -30,11 +53,16 @@ export default {
     return {
       columns: 5,
       rows: 3,
+      gridItemSize: 100,
       gridInput:
 `5 3
 1 1 E
 RFRFRFRF`,
       shipsInformation: [],
+      timeline: null,
+      outputActive: false,
+      calculatedPositions: null,
+      output: ''
     }
   },
   methods: {
@@ -74,13 +102,23 @@ RFRFRFRF`,
         }
       }
 
-      this.calculatePosition(this.shipsInformation[0]);
+      // Get all calculations for each set
+      this.calculatedPositions = [];
+      for (let i = 0; i < this.shipsInformation.length; i += 1) {
+        const calculation = this.calculatePosition(this.shipsInformation[i]);
+
+        this.calculatedPositions[i] = calculation;
+      }
+
+      // Show all this information in the output
+      this.updateShipOutput();
     },
     calculatePosition(shipInformation) {
       const startPosition = shipInformation.startPosition;
       const instructions = shipInformation.instructions;
       let coordinatesString = startPosition.split(' ').join('');
       let isLost = false;
+      const steps = [];
       let c = {
         x: parseInt(coordinatesString[0]),
         y: parseInt(coordinatesString[1]),
@@ -97,7 +135,10 @@ RFRFRFRF`,
         } else if (char === 'F') {
 
           // Use a temporary variable to check if our ship gets lost
-          const tempC = c;
+          const tempC = {};
+          tempC.x = c.x;
+          tempC.y = c.y;
+          tempC.direction = c.direction;
 
           switch(tempC.direction) {
             case 'N':
@@ -117,16 +158,22 @@ RFRFRFRF`,
           if (tempC.x > this.columns || tempC < 0
               || tempC.y > this.rows || tempC.y < 0) {
             isLost = true;
-            // return this.showShipOutput(c, true);
             break;
-          } else {
-            c = tempC;
           }
+
+          c = tempC;
+          steps.push(c);
         }
       }
+      // this.showShipOutput(c, isLost);
+      // this.$refs.ship.playAnimation;
+      const calculationOuput = {
+        finalPosition: c,
+        isLost: isLost,
+        steps: steps,
+      };
 
-      this.showShipOutput(c, isLost);
-
+      return calculationOuput;
     },
     rotate(currentDirection, rotation) {
       const orientations = ['N', 'E', 'S', 'W'];
@@ -146,22 +193,110 @@ RFRFRFRF`,
 
       return orientations[currentOrientationIndex];
     },
-    showShipOutput(shipInfo, lost) {
-      let lostString = '';
-      if (lost) lostString = 'LOST';
-      console.log(`${shipInfo.x} ${shipInfo.y} ${shipInfo.direction} ${lostString}`);
+    updateShipOutput(shipInfo, lost) {
+      this.output = [];
+
+      for (let i = 0; i < this.calculatedPositions.length; i += 1) {
+        const pos = this.calculatedPositions[i];
+        let lostString = '';
+        if (pos.isLost) lostString = 'LOST';
+
+         this.output[i] = `<b>Ship ${i + 1}:</b> ${pos.finalPosition.x} ${pos.finalPosition.y} ${pos.finalPosition.direction} ${lostString}<br>`;
+      }
+
+      this.outputActive = true;
+    },
+    playAnimation(index) {
+      this.outputActive = false;
     }
-  },
+  }
 }
 </script>
 
-<style>
+<style lang="scss">
+
+@import url('https://fonts.googleapis.com/css?family=Work+Sans&display=swap');
+
+
+body, html {
+  background-color: #2E294E;
+  font-family: 'Work Sans', sans-serif;
+}
+
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: #fff;
   margin-top: 60px;
+}
+
+textarea {
+ font-family: 'Work Sans', sans-serif;
+ width: 100%;
+ max-width: 350px;
+ background: transparent;
+ border: 1px solid #fff;
+ border-radius: 10px;
+ color: #fff;
+ padding: 20px;
+ display: inline-block;
+ font-size: 18px;
+ min-height: 80px;
+}
+
+button {
+  background-color: #1B998B;
+  color: #fff;
+  font-family: 'Work Sans', sans-serif;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 25px;
+  cursor: pointer;
+  // margin-top: 30px;
+}
+
+.visuals-container {
+  position: relative;
+  margin: 50px auto;
+}
+
+.output {
+  visibility: 0;
+  opacity: 0;
+  transition: 200ms opacity cubic-bezier(0.215, 0.61, 0.355, 1), 200ms visibility cubic-bezier(0.215, 0.61, 0.355, 1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+
+  .inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    color: #333;
+    display: inline-block;
+    border-radius: 10px;
+    padding: 10px 20px;
+  }
+
+  &.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+  }
 }
 </style>
