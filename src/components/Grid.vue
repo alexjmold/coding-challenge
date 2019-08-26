@@ -33,15 +33,12 @@
 		data() {
 			return {};
 		},
-		mounted() {
-
-		}
 	}
 </script>
 
 <style lang="scss">
 .grid-container {
-	margin: 50px auto;
+	margin: 0px auto;
 	position: relative;
 	width: auto;
 	border: 1px solid #1B998B;

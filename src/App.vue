@@ -12,7 +12,10 @@
         :rows="rows"
         :grid-item-size="gridItemSize"
       />
-      <Ship ref="ship"/>
+      <Ship
+        ref="ship"
+        :grid-item-size="gridItemSize"
+      />
     </div>
     <div class="input-container">
       <textarea v-model="gridInput"></textarea>
@@ -26,6 +29,7 @@
       >
         <div class="close" @click="outputActive = false;">x</div>
         <div class="inner">
+          <b>Output</b>
           <div
             class="output-row"
             v-for="(item, index) in output"
@@ -35,6 +39,17 @@
           </div>
         </div>
       </div>
+    </div>
+    <div
+      class="show-hide-output"
+      @click="outputActive = !outputActive"
+    >
+      <p v-if="outputActive">
+        Hide output
+      </p>
+      <p v-else>
+        Show output
+      </p>
     </div>
   </div>
 </template>
@@ -54,23 +69,20 @@ export default {
       columns: 5,
       rows: 3,
       gridItemSize: 100,
+      shipsInformation: [],
+      timeline: null,
+      calculatedPositions: null,
+      outputActive: false,
+      output: '',
       gridInput:
 `5 3
 1 1 E
 RFRFRFRF`,
-      shipsInformation: [],
-      timeline: null,
-      outputActive: false,
-      calculatedPositions: null,
-      output: ''
     }
   },
   methods: {
     processInput() {
-      // Example input
-      // 5 3
-      // 1 1 E
-      // RFRFRFRF
+      // Get input from v-model
       const input = this.gridInput;
 
       // Split all input into separate array instances
@@ -119,26 +131,29 @@ RFRFRFRF`,
       let coordinatesString = startPosition.split(' ').join('');
       let isLost = false;
       const steps = [];
+      const initialDirection = coordinatesString[2];
       let c = {
         x: parseInt(coordinatesString[0]),
         y: parseInt(coordinatesString[1]),
-        direction: coordinatesString[2]
+        direction: coordinatesString[2],
       };
 
+      let initialPosition = Object.assign({}, c);
+
       for (let i = 0; i < instructions.length; i += 1) {
+        // Use a temporary variable to check if our ship gets lost
         const char = instructions[i];
+        const tempC = {};
+        tempC.x = c.x;
+        tempC.y = c.y;
+        tempC.direction = c.direction;
+        tempC.instruction = char;
 
         if (char === 'R' || char === 'L') {
-          const direction = c.direction;
+          const direction = tempC.direction;
           const newDirection = this.rotate(direction, char);
-          c.direction = newDirection;
+          tempC.direction = newDirection;
         } else if (char === 'F') {
-
-          // Use a temporary variable to check if our ship gets lost
-          const tempC = {};
-          tempC.x = c.x;
-          tempC.y = c.y;
-          tempC.direction = c.direction;
 
           switch(tempC.direction) {
             case 'N':
@@ -160,17 +175,17 @@ RFRFRFRF`,
             isLost = true;
             break;
           }
-
-          c = tempC;
-          steps.push(c);
         }
+
+        c = tempC;
+        steps.push(c);
       }
-      // this.showShipOutput(c, isLost);
-      // this.$refs.ship.playAnimation;
+
       const calculationOuput = {
         finalPosition: c,
-        isLost: isLost,
-        steps: steps,
+        isLost,
+        steps,
+        initialPosition
       };
 
       return calculationOuput;
@@ -208,6 +223,7 @@ RFRFRFRF`,
     },
     playAnimation(index) {
       this.outputActive = false;
+      this.$refs.ship.createAnimation(this.calculatedPositions[index]);
     }
   }
 }
@@ -297,6 +313,14 @@ button {
     top: 10px;
     right: 10px;
     cursor: pointer;
+    font-size: 25px;
   }
+}
+
+.show-hide-output {
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  cursor: pointer;
 }
 </style>
