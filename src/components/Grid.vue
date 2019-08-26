@@ -27,12 +27,11 @@
 	export default {
 		props: [
 			'columns',
-			'rows'
+			'rows',
+			'gridItemSize',
 		],
 		data() {
-			return {
-				gridItemSize: 100,
-			};
+			return {};
 		},
 		mounted() {
 
@@ -45,6 +44,8 @@
 	margin: 50px auto;
 	position: relative;
 	width: auto;
+	border: 1px solid #1B998B;
+	box-sizing: border-box;
 }
 
 .row {
@@ -53,7 +54,7 @@
 }
 
 .column {
-	border: 1px solid black;
+	border: 1px solid #1B998B;
 	display: inline-block;
 	margin: 0;
 	padding: 0;
