@@ -30,7 +30,10 @@ export default {
     return {
       columns: 5,
       rows: 3,
-      gridInput: '',
+      gridInput:
+`5 3
+1 1 E
+RFRFRFRF`,
       shipsInformation: [],
     }
   },
@@ -70,12 +73,85 @@ export default {
           shipInformationCounter += 1;
         }
       }
+
+      this.calculatePosition(this.shipsInformation[0]);
     },
     calculatePosition(shipInformation) {
       const startPosition = shipInformation.startPosition;
       const instructions = shipInformation.instructions;
+      let coordinatesString = startPosition.split(' ').join('');
+      let isLost = false;
+      let c = {
+        x: parseInt(coordinatesString[0]),
+        y: parseInt(coordinatesString[1]),
+        direction: coordinatesString[2]
+      };
+
+      for (let i = 0; i < instructions.length; i += 1) {
+        const char = instructions[i];
+
+        if (char === 'R' || char === 'L') {
+          const direction = c.direction;
+          const newDirection = this.rotate(direction, char);
+          c.direction = newDirection;
+        } else if (char === 'F') {
+
+          // Use a temporary variable to check if our ship gets lost
+          const tempC = c;
+
+          switch(tempC.direction) {
+            case 'N':
+              tempC.y += 1;
+              break;
+            case 'E':
+              tempC.x += 1;
+              break;
+            case 'S':
+              tempC.y -= 1;
+              break;
+            case 'W':
+              tempC.x -= 1;
+              break;
+          }
+
+          if (tempC.x > this.columns || tempC < 0
+              || tempC.y > this.rows || tempC.y < 0) {
+            isLost = true;
+            // return this.showShipOutput(c, true);
+            break;
+          } else {
+            c = tempC;
+          }
+        }
+      }
+
+      this.showShipOutput(c, isLost);
+
+    },
+    rotate(currentDirection, rotation) {
+      const orientations = ['N', 'E', 'S', 'W'];
+      let currentOrientationIndex = orientations.indexOf(currentDirection);
+
+      if (rotation === 'R') {
+        currentOrientationIndex += 1;
+        if (currentOrientationIndex > (orientations.length - 1)) {
+          currentOrientationIndex = 0;
+        }
+      } else if (rotation === 'L') {
+        currentOrientationIndex -= 1;
+        if (currentOrientationIndex < 0) {
+          currentOrientationIndex = (orientations.length - 1);
+        }
+      }
+
+      return orientations[currentOrientationIndex];
+    },
+    showShipOutput(shipInfo, lost) {
+      let lostString = '';
+      if (lost) lostString = 'LOST';
+      console.log(`${shipInfo.x} ${shipInfo.y} ${shipInfo.direction} ${lostString}`);
     }
-  }
+  },
 }
 </script>
 
