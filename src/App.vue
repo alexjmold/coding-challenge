@@ -33,6 +33,7 @@
           <div
             class="output-row"
             v-for="(item, index) in output"
+            :key="index"
           >
             <p v-html="output[index]"></p>
             <button @click="playAnimation(index)">Play animation</button>
@@ -131,7 +132,6 @@ RFRFRFRF`,
       let coordinatesString = startPosition.split(' ').join('');
       let isLost = false;
       const steps = [];
-      const initialDirection = coordinatesString[2];
       let c = {
         x: parseInt(coordinatesString[0]),
         y: parseInt(coordinatesString[1]),
@@ -208,7 +208,7 @@ RFRFRFRF`,
 
       return orientations[currentOrientationIndex];
     },
-    updateShipOutput(shipInfo, lost) {
+    updateShipOutput() {
       this.output = [];
 
       for (let i = 0; i < this.calculatedPositions.length; i += 1) {
