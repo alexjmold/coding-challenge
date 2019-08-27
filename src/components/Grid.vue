@@ -5,18 +5,18 @@
       v-for="index in rows"
       :key="index"
       :style="{
-				width: `${gridItemSize * columns}px`,
-				height: `${gridItemSize}px`
-			}"
+        width: `${gridItemSize * columns}px`,
+        height: `${gridItemSize}px`
+      }"
     >
       <div
         class="column"
         v-for="index in columns"
         :key="index"
         :style="{
-					width: `${gridItemSize}px`,
-					height: `${gridItemSize}px`
-				}"
+          width: `${gridItemSize}px`,
+          height: `${gridItemSize}px`
+        }"
       ></div>
     </div>
   </div>
