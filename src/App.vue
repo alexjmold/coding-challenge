@@ -75,14 +75,23 @@ export default {
       calculatedPositions: null,
       outputActive: false,
       output: '',
+      warnings: [],
       gridInput:
 `5 3
 1 1 E
-RFRFRFRF`,
+RFRFRFRF
+
+3 2 N
+FRRFLLFFRRFLL
+
+0 3 W
+LLFFFLFLFL`,
     }
   },
   methods: {
     processInput() {
+      this.warnings = [];
+
       // Get input from v-model
       const input = this.gridInput;
 
@@ -149,6 +158,23 @@ RFRFRFRF`,
         tempC.direction = c.direction;
         tempC.instruction = char;
 
+        let ignoreCommand = false;
+
+        // check against warnings
+        for (let j = 0; j < this.warnings.length; j += 1) {
+          const w = this.warnings[j];
+          if (tempC.x === w.x &&
+              tempC.y === w.y &&
+              tempC.instruction === w.command &&
+              tempC.direction === w.direction) {
+                ignoreCommand = true;
+              }
+        }
+
+        if (ignoreCommand) {
+          continue;
+        }
+
         if (char === 'R' || char === 'L') {
           const direction = tempC.direction;
           const newDirection = this.rotate(direction, char);
@@ -173,6 +199,12 @@ RFRFRFRF`,
           if (tempC.x > this.columns || tempC < 0
               || tempC.y > this.rows || tempC.y < 0) {
             isLost = true;
+            this.warnings.push({
+              x: c.x,
+              y: c.y,
+              direction: c.direction,
+              command: char,
+            });
             break;
           }
         }
